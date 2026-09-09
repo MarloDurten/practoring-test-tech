@@ -17,7 +17,7 @@ from typing import Iterator, Optional, Union
 import cv2
 import numpy as np
 
-from app.config import DEFAULT_MAX_DURATION_SEC
+from app.config import DEFAULT_FALLBACK_FPS, DEFAULT_MAX_DURATION_SEC
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,18 @@ def parse_source(value: str | int) -> SourceType:
     if text.isdigit():
         return int(text)
     return text
+
+
+def effective_source_fps(reported_fps: float | None) -> float:
+    """FPS источника: reported, либо общий fallback, если OpenCV отдал 0."""
+    fps = float(reported_fps or 0.0)
+    return fps if fps > 1e-3 else float(DEFAULT_FALLBACK_FPS)
+
+
+def marked_output_fps(reported_fps: float | None, frame_stride: int) -> float:
+    """FPS marked-видео: только обработанные кадры, тот же fallback, что у timestamps."""
+    src = effective_source_fps(reported_fps)
+    return max(1.0, src / max(1, int(frame_stride)))
 
 
 class VideoSource:
@@ -192,7 +204,7 @@ class VideoSource:
             self.open()
 
         idx = 0
-        fps = self.info.reported_fps if self.info.reported_fps > 1e-3 else 30.0
+        fps = effective_source_fps(self.info.reported_fps)
         start_wall = time.perf_counter()
 
         while True:

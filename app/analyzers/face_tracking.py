@@ -162,6 +162,7 @@ class FaceTracker:
         self._backend = "none"
         self._mesh = None
         self._landmarker = None
+        self._last_timestamp_ms = -1
         if not enabled:
             return
         if not _MP_AVAILABLE:
@@ -215,7 +216,7 @@ class FaceTracker:
         path = Path(model_path) if model_path else ensure_landmarker_model()
         options = FaceLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=str(path)),
-            running_mode=RunningMode.IMAGE,
+            running_mode=RunningMode.VIDEO,
             num_faces=max_faces,
             min_face_detection_confidence=min_detection_confidence,
             min_face_presence_confidence=min_detection_confidence,
@@ -225,9 +226,20 @@ class FaceTracker:
         )
         self._landmarker = FaceLandmarker.create_from_options(options)
         self._backend = "tasks"
-        logger.info("FaceTracker: MediaPipe Tasks FaceLandmarker (%s)", path.name)
+        logger.info("FaceTracker: MediaPipe Tasks FaceLandmarker VIDEO (%s)", path.name)
 
-    def infer(self, rgb: np.ndarray) -> FaceResult:
+    def _next_video_timestamp_ms(self, timestamp_ms: Optional[int] = None) -> int:
+        """Монотонные миллисекунды для FaceLandmarker.detect_for_video."""
+        if timestamp_ms is None:
+            ts = 0 if self._last_timestamp_ms < 0 else self._last_timestamp_ms + 33
+        else:
+            ts = int(timestamp_ms)
+        if ts <= self._last_timestamp_ms:
+            ts = self._last_timestamp_ms + 1
+        self._last_timestamp_ms = ts
+        return ts
+
+    def infer(self, rgb: np.ndarray, timestamp_ms: Optional[int] = None) -> FaceResult:
         if not self.enabled:
             return FaceResult(extra={"disabled": True})
         if rgb is None or rgb.size == 0:
@@ -236,7 +248,7 @@ class FaceTracker:
             if self._backend == "solutions":
                 return self._infer_solutions(rgb)
             if self._backend == "tasks":
-                return self._infer_tasks(rgb)
+                return self._infer_tasks(rgb, timestamp_ms)
             raise RuntimeError("FaceTracker не инициализирован")
         except Exception as exc:  # noqa: BLE001
             logger.exception("Face tracker упал: %s", exc)
@@ -259,12 +271,13 @@ class FaceTracker:
         confidence = float(np.clip(np.mean(np.maximum(vis, presence)), 0.0, 1.0))
         return self._pack(rgb.shape[1], rgb.shape[0], pts_norm, vis, confidence)
 
-    def _infer_tasks(self, rgb: np.ndarray) -> FaceResult:
+    def _infer_tasks(self, rgb: np.ndarray, timestamp_ms: Optional[int] = None) -> FaceResult:
         if rgb.dtype != np.uint8:
             rgb = np.clip(rgb, 0, 255).astype(np.uint8)
         rgb = np.ascontiguousarray(rgb)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-        result = self._landmarker.detect(mp_image)
+        ts = self._next_video_timestamp_ms(timestamp_ms)
+        result = self._landmarker.detect_for_video(mp_image, ts)
         if not result.face_landmarks:
             return FaceResult()
         lm = result.face_landmarks[0]
@@ -357,6 +370,7 @@ class FaceTracker:
         return _rvec_to_euler(rvec)
 
     def close(self) -> None:
+        self._last_timestamp_ms = -1
         if self._mesh is not None:
             try:
                 self._mesh.close()

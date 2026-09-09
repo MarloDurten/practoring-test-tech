@@ -8,10 +8,17 @@ import cv2
 import numpy as np
 import pytest
 
+from app.analyzers.face_tracking import FaceTracker
 from app.analyzers.gaze_estimation import GazeEstimator
 from app.analyzers.pipeline import AnalysisPipeline
-from app.config import AppConfig, ModuleToggles
-from app.video_capture import CapturedFrame, VideoSource, parse_source
+from app.config import DEFAULT_FALLBACK_FPS, AppConfig, ModuleToggles
+from app.video_capture import (
+    CapturedFrame,
+    VideoSource,
+    effective_source_fps,
+    marked_output_fps,
+    parse_source,
+)
 
 
 def _write_video(path: Path, n: int = 12, w: int = 320, h: int = 240, fps: int = 10) -> None:
@@ -30,6 +37,25 @@ def test_parse_source() -> None:
     assert parse_source("0") == 0
     assert parse_source("2") == 2
     assert parse_source("clip.mp4") == "clip.mp4"
+
+
+def test_effective_fps_fallback_matches_marked_output() -> None:
+    assert effective_source_fps(0.0) == DEFAULT_FALLBACK_FPS
+    assert effective_source_fps(None) == DEFAULT_FALLBACK_FPS
+    assert effective_source_fps(25.0) == 25.0
+    assert marked_output_fps(0.0, 1) == DEFAULT_FALLBACK_FPS
+    assert marked_output_fps(0.0, 3) == pytest.approx(DEFAULT_FALLBACK_FPS / 3)
+    assert marked_output_fps(30.0, 3) == pytest.approx(10.0)
+
+
+def test_video_landmarker_timestamps_are_monotonic() -> None:
+    tracker = FaceTracker(enabled=False)
+    assert tracker._next_video_timestamp_ms(0) == 0
+    assert tracker._next_video_timestamp_ms(0) == 1
+    assert tracker._next_video_timestamp_ms(40) == 40
+    assert tracker._next_video_timestamp_ms(None) == 73
+    tracker.close()
+    assert tracker._next_video_timestamp_ms(0) == 0
 
 
 def test_video_source_reads_actual_resolution(tmp_path: Path) -> None:

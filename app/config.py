@@ -39,6 +39,10 @@ MAX_INPUT_PIXELS = 1920 * 1080
 # Верхняя граница длительности входного ролика (и сессии с камеры).
 DEFAULT_MAX_DURATION_SEC = 10 * 60
 
+# Если OpenCV не сообщает FPS контейнера/камеры, и захват, и marked-видео
+# используют один и тот же fallback, чтобы timestamp_sec и длительность ролика совпадали.
+DEFAULT_FALLBACK_FPS = 30.0
+
 
 @dataclass
 class ModuleToggles:

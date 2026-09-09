@@ -153,7 +153,10 @@ class AnalysisPipeline:
         t_p1 = time.perf_counter()
 
         # --- CV-инференс ---
-        face = self._ensure_face_tracker().infer(pre.rgb)
+        face = self._ensure_face_tracker().infer(
+            pre.rgb,
+            timestamp_ms=int(round(captured.timestamp_sec * 1000.0)),
+        )
         gaze = self.gaze_estimator.infer(face)
         distraction = self.distraction.infer(face, gaze, captured.timestamp_sec)
         ai = self.ai_heuristics.infer(pre.gray, face)

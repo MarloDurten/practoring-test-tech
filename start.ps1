@@ -2,8 +2,8 @@
 # Стрелки: выбрать видео в ТЕКУЩЕЙ папке и формат сжатия.
 # После анализа отчёт печатается в этом же окне.
 #
-#   cd C:\путь\к\папке\с\видео
-#   C:\Users\user\Desktop\practoring_test_tech\start.ps1
+#   cd path\to\videos
+#   path\to\practoring-test-tech\start.ps1
 #
 # Или из папки проекта (там тоже можно положить видео):
 #   .\start.ps1

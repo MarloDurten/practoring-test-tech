@@ -16,6 +16,7 @@ from app.human_report import format_human_report
 from app.media import COMPRESSION_PRESETS, open_video_writer, preset_by_id
 from app.metrics import format_console_summary
 from app.report_paths import build_run_layout
+from app.video_capture import marked_output_fps
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -241,8 +242,7 @@ def run_session(cfg: AppConfig, quiet_logs: bool = False) -> int:
             if marked_writer is None:
                 h, w = vis.shape[:2]
                 info = pipeline._source_info or {}
-                src_fps = float(info.get("reported_fps") or 0.0) or 25.0
-                fps = max(1.0, src_fps / max(1, cfg.frame_stride))
+                fps = marked_output_fps(info.get("reported_fps"), cfg.frame_stride)
                 marked_writer, used_fourcc, marked_path = open_video_writer(
                     marked_path, fps, (w, h), codec.fourcc
                 )

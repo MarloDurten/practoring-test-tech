@@ -8,8 +8,8 @@ from app.report_paths import build_run_layout, source_slug
 
 
 def test_source_slug_file_with_spaces() -> None:
-    slug = source_slug(r"C:\Users\user\Desktop\practoring_test_tech\2026-09-09 14-42-26.mkv")
-    assert slug == "2026-09-09_14-42-26"
+    slug = source_slug(r"C:\data\exam clip.mkv")
+    assert slug == "exam_clip"
 
 
 def test_source_slug_camera() -> None:

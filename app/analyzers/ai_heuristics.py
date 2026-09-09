@@ -125,12 +125,11 @@ class AiGeneratedHeuristics:
         xb0, xb1 = max(0, x0 - pad), min(w_img, x1 + pad)
         bg_roi = gray[yb0:yb1, xb0:xb1]
         local_mask = bg_mask[yb0:yb1, xb0:xb1]
-        if bg_roi.size and local_mask.any():
-            bg_pixels = bg_roi[local_mask]
-            if bg_pixels.size > 64:
-                bg_lap = float(cv2.Laplacian(bg_pixels.reshape(-1, 1), cv2.CV_64F).var())
-            else:
-                bg_lap = float(cv2.Laplacian(gray, cv2.CV_64F).var())
+        if bg_roi.size and local_mask.any() and int(local_mask.sum()) > 64:
+            # Laplacian только по 2D-окрестности; дисперсия — по пикселям фона.
+            # Нельзя flatten в столбец: тогда метрика не сравнима с face_lap.
+            bg_lap_map = cv2.Laplacian(bg_roi, cv2.CV_64F)
+            bg_lap = float(bg_lap_map[local_mask].var())
         else:
             bg_lap = float(cv2.Laplacian(gray, cv2.CV_64F).var())
         details["bg_laplacian_var"] = bg_lap

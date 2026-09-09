@@ -106,13 +106,12 @@ python -m pytest
 В папке с видео (или в папке проекта) стрелками выбираете файл и формат сжатия. После проверки в том же окне печатается отчёт: длительность ролика, сколько шла проверка, CPU/RAM/GPU.
 
 ```powershell
-# из папки с видео
-cd C:\путь\к\видео
-C:\Users\user\Desktop\practoring_test_tech\start.ps1
-
-# или из папки проекта
-cd C:\Users\user\Desktop\practoring_test_tech
+# Из корня клонированного репозитория (видео можно положить сюда же)
 .\start.ps1
+
+# Из другой папки с роликами: укажите start.ps1 из репозитория
+cd path\to\videos
+path\to\practoring-test-tech\start.ps1
 ```
 
 Управление: **↑ / ↓** выбрать, **Enter** подтвердить, **Q** выход.
@@ -132,7 +131,7 @@ $env:PYTHONUTF8 = "1"
 Если нужен старый CLI без меню:
 
 ```powershell
-.\.venv\Scripts\python.exe -m app.main --source ".\2026-09-09 14-42-26.mkv" --profile balanced --save-marked --codec mp4v
+.\.venv\Scripts\python.exe -m app.main --source .\exam.mkv --profile balanced --save-marked --codec mp4v
 ```
 
 ## Запуск через bash-скрипт (отчёт после маркировок)
@@ -221,7 +220,7 @@ python -m app.main --source exam.mp4 --no-face --no-gaze
 
 ```
 reports/
-  2026-09-09_14-42-26/          # имя видео (пробелы → _)
+  exam/                         # имя видео (пробелы → _)
     20260909_145000/            # конкретный прогон
       csv/frames_balanced.csv
       json/summary_balanced.json
