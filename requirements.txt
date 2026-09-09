@@ -1,0 +1,11 @@
+# opencv-contrib тянет MediaPipe; не ставьте параллельно opencv-python —
+# два пакета cv2 конфликтуют (у вас окажется непредсказуемая версия).
+opencv-contrib-python>=4.8.0,<6
+numpy>=1.24.0,<3
+mediapipe>=0.10.9,<0.11
+psutil>=5.9.0
+pytest>=7.4.0
+
+# Опционально: метрики NVIDIA GPU (VRAM / utilization).
+# Если видеокарты нет, приложение работает в CPU-only режиме.
+nvidia-ml-py>=12.535.0
