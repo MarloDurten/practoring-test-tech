@@ -9,6 +9,7 @@ __pycache__/
 .ruff_cache/
 reports/
 .pytest-tmp/
+.tools/
 *.mp4
 *.avi
 *.mkv
